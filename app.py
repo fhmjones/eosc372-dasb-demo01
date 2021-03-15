@@ -41,9 +41,17 @@ app.layout = html.Div([
 
         #### Purpose & Instructions
 
-        * Purpose is to explore temperature and salinity depth profiles as a function of latitude in the Pacific Ocean. 
-        For more about this data collection cruise, see https://geotraces-gp15.com/about-geotraces-gp15/.
-        * Mouse over sounding locations (dots) will plot corresponding temperature and salinity profiles. Mouse wheel zooms within the map.  
+        * A learning goal for this kind of application would relate to examining how 
+        temperature, salinity & oxygen depth profiles vary as a function of latitude in the Pacific Ocean. 
+        Data were obtained from the [GEOTRACES cruise GP15](https://geotraces-gp15.com/about-geotraces-gp15/).
+        * A secondare goal is to establish proof of concept. This dashboard code should be relatively easy (hopefully?) 
+        to adapt for other data sets, other locations, other learning goals.
+        * **Instructions**: An interactive map is shown with measurement stations along longitude -152E, from Alaska to south of equator. 
+        Mouse-over a station (dots) will plot the corresponding temperature, salinity & oxygen profiles. Mouse wheel zooms within the map. 
+        Map background and station dot color can be adjusted with checkboxes. The slider changes vertical size of the map. 
+        These are included for demonstration purposes. Other types of adjustments could be included, depending on the needs of the users and learning goals. 
+        The app could be expanded to include other data provided with this data-set 
+        (there are three others that would need calibration information as their values are in "volts"). 
 
         ----------
         '''),    
@@ -99,7 +107,7 @@ app.layout = html.Div([
             },
             # hoverData={'points:'}
         )
-    ], style={'width': '48%', 'display': 'inline-block', 'padding': '0 20'}),
+    ], style={'width': '38%', 'display': 'inline-block', 'padding': '0 20'}),
 
     # two side-by-side data plots
     # these have reduced interactivity to simplify the look and feel
@@ -116,7 +124,7 @@ app.layout = html.Div([
                 #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
             }
         ),
-    ], style={'display': 'inline-block', 'width': '24%'}),
+    ], style={'display': 'inline-block', 'width': '20%'}),
     html.Div([
         dcc.Graph(
             id='salinity',
@@ -130,7 +138,21 @@ app.layout = html.Div([
                 #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
             }
         ),        
-    ], style={'display': 'inline-block', 'width': '24%'}),
+    ], style={'display': 'inline-block', 'width': '20%'}),
+    html.Div([
+        dcc.Graph(
+            id='oxygen',
+            config={
+                'staticPlot': False,      # True, False
+                'scrollZoom': False,      # True, False
+                'doubleClick': 'reset',   # 'reset', 'autosize' or 'reset+autosize', False
+                'showTips': True,         # True, False
+                'displayModeBar': False,  # True, False, 'hover'
+                'watermark': True,
+                #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
+            }
+        ),        
+    ], style={'display': 'inline-block', 'width': '20%'}),
 
     dcc.Markdown('''
         ----
@@ -145,7 +167,7 @@ app.layout = html.Div([
         - **Code:** F. Jones. Based on ideas learned in [Plotly interactive graphing](https://dash.plotly.com/interactive-graphing) documentation and a [great video on interactive plots](https://www.youtube.com/watch?v=G8r2BB3GFVY) using "hover" or "click" events.
   
         ''')
-], style={'width': '900px'})
+], style={'width': '1000px'})
 
 # The callback function with it's app.callback wrapper.
 @app.callback(
@@ -205,8 +227,8 @@ def update_tgraph(hov_data):
         longit = hov_data['points'][0]['lon']
     
     sitedf = read_onedataset(readfile)
-    annot_lat = f'Locn: {latit:4.4f}N,'
-    annot_long = f'{longit:4.3f}E.'
+    annot_lat = f'Locn: {latit:4.4f}N'
+    annot_long = f'{longit:4.4f}E'
         
     figT = px.line(sitedf, x="CTDTMP", y="CTDPRS", title='Temperature')
     figT.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
@@ -219,10 +241,10 @@ def update_tgraph(hov_data):
     # there are no doubt other ways of adding this information
     figT.add_annotation(text=annot_lat,
                   xref="paper", yref="paper", # Google this annotation function for explanation of "paper"
-                  x=.2, y=.1, showarrow=False)
+                  x=.14, y=.1, showarrow=False)
     figT.add_annotation(text=annot_long,
                   xref="paper", yref="paper",
-                  x=1, y=.05, showarrow=False)
+                  x=.32, y=.05, showarrow=False)
 
     return figT
 
@@ -246,6 +268,27 @@ def update_sgraph(hov_data):
     figS.update_yaxes(range=[2600,0], title="Depth in DBars")
     
     return figS
+
+# make the salinity graph based on "hovering" over location on the map
+@app.callback(
+    Output(component_id='oxygen', component_property='figure'),
+    Input(component_id='map', component_property='hoverData')
+)
+def update_sgraph(hov_data):
+    if hov_data is None:
+        readfile = "data/33RR20180918_00001_00002_ct1.csv"
+        # lat/long not needed since annotation is on the temperature plot. 
+    else:
+        readfile = hov_data['points'][0]['customdata'][0]
+    
+    sitedf = read_onedataset(readfile)
+
+    figO = px.line(sitedf, x="CTDOXY", y="CTDPRS", title='Oxygen')
+    figO.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
+    figO.update_xaxes(range=[0,320], title="UMOL/KG")
+    figO.update_yaxes(range=[2600,0], title="Depth in DBars")
+    
+    return figO
 
 if __name__ == '__main__':
     app.run_server(debug=True, host='0.0.0.0', port=8050)
