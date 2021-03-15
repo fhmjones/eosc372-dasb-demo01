@@ -84,13 +84,13 @@ app.layout = html.Div([
         dcc.Slider(id='mapheight', min=200, max=600, value=400, step=50,
             marks={200:'200 pixels', 300:'300', 400:'400', 500:'500', 600:'600',}
         )
-    ], style={'width': '48%', 'display': 'inline-block'}),
+    ], style={'width': '38%', 'display': 'inline-block'}),
 
     html.Div([
         dcc.Markdown('''
         **Measured values versus depth.**
         '''),        
-    ], style={'width': '48%', 'display': 'inline-block', 'textAlign': 'center'}),
+    ], style={'width': '60%', 'display': 'inline-block', 'textAlign': 'center'}),
 
     # the map with location points
     html.Div([
@@ -134,7 +134,7 @@ app.layout = html.Div([
                 'doubleClick': 'reset',   # 'reset', 'autosize' or 'reset+autosize', False
                 'showTips': True,         # True, False
                 'displayModeBar': False,  # True, False, 'hover'
-                'watermark': True,
+                'watermark': False,
                 #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
             }
         ),        
