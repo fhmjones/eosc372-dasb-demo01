@@ -81,15 +81,23 @@ app.layout = html.Div([
         ),
         #this slider is not necessary but demonstrates use of sliders that may be useful in other apps
         html.Label('map vertical size:'),
-        dcc.Slider(id='mapheight', min=200, max=600, value=400, step=50,
-            marks={200:'200 pixels', 300:'300', 400:'400', 500:'500', 600:'600',}
+        dcc.Slider(id='mapheight', min=300, max=500, value=400, step=50,
+            marks={300:'300 pixels', 400:'400', 500:'500',}
         )
     ], style={'width': '38%', 'display': 'inline-block'}),
 
     html.Div([
         dcc.Markdown('''
-        **Measured values versus depth.**
-        '''),        
+        **Measured values versus depth.**          
+        Click-drag to zoom graphs. Double click to auto-scale. Reset all using axis slider. 
+        '''),
+        
+        #Adjust depth axes
+        html.Label('Depth axis, DBars'),
+        dcc.Slider(id='depthaxis', min=200, max=3500, value=2500, step=None,
+            marks={200:'200', 500:'500', 1000:'1000', 1500:'1500', 2500:'2500', 3500:'3500'}
+        )
+        
     ], style={'width': '60%', 'display': 'inline-block', 'textAlign': 'center'}),
 
     # the map with location points
@@ -119,9 +127,9 @@ app.layout = html.Div([
                 'scrollZoom': False,      # True, False
                 'doubleClick': 'reset',   # 'reset', 'autosize' or 'reset+autosize', False
                 'showTips': True,         # True, False
-                'displayModeBar': False,  # True, False, 'hover'
+                'displayModeBar': 'hover',  # True, False, 'hover'
                 'watermark': False,
-                #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
+                'modeBarButtonsToRemove': ['resetAxis', 'pan2d', 'resetScale2d', 'select2d', 'lasso2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'hoverCompareCartesian', 'hoverClosestCartesian', 'autoScale2d'],
             }
         ),
     ], style={'display': 'inline-block', 'width': '20%'}),
@@ -133,9 +141,9 @@ app.layout = html.Div([
                 'scrollZoom': False,      # True, False
                 'doubleClick': 'reset',   # 'reset', 'autosize' or 'reset+autosize', False
                 'showTips': True,         # True, False
-                'displayModeBar': False,  # True, False, 'hover'
+                'displayModeBar': 'hover',  # True, False, 'hover'
                 'watermark': False,
-                #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
+                'modeBarButtonsToRemove': ['resetAxis', 'pan2d', 'resetScale2d', 'select2d', 'lasso2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'hoverCompareCartesian', 'hoverClosestCartesian', 'autoScale2d'],
             }
         ),        
     ], style={'display': 'inline-block', 'width': '20%'}),
@@ -147,9 +155,9 @@ app.layout = html.Div([
                 'scrollZoom': False,      # True, False
                 'doubleClick': 'reset',   # 'reset', 'autosize' or 'reset+autosize', False
                 'showTips': True,         # True, False
-                'displayModeBar': False,  # True, False, 'hover'
-                'watermark': True,
-                #'modeBarButtonsToRemove': ['pan2d','select2d', 'lasso2d'],
+                'displayModeBar': 'hover',  # True, False, 'hover'
+                'watermark': False,
+                'modeBarButtonsToRemove': ['resetAxis', 'pan2d', 'resetScale2d', 'select2d', 'lasso2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'hoverCompareCartesian', 'hoverClosestCartesian', 'autoScale2d'],
             }
         ),        
     ], style={'display': 'inline-block', 'width': '20%'}),
@@ -213,9 +221,10 @@ def update_map(mapheight, color_checkbox, background):
 # make the temperature graph based on "hovering" over location on the map
 @app.callback(
     Output(component_id='temperature', component_property='figure'),
-    Input(component_id='map', component_property='hoverData')
+    Input(component_id='map', component_property='hoverData'),
+    Input('depthaxis', 'value')
 )
-def update_tgraph(hov_data):
+def update_tgraph(hov_data, depthaxis):
     if hov_data is None: # necessary for startup before interacting with the map.
         readfile = "data/33RR20180918_00001_00002_ct1.csv"
         latit = 56.05826
@@ -234,7 +243,7 @@ def update_tgraph(hov_data):
     figT.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
     figT.update_xaxes(range=[0,30], title="deg. C.")
     # figT.update_xaxes(range=[0,30], title="deg. C.", side="top")
-    figT.update_yaxes(range=[2600,0], title="Depth in DBars")
+    figT.update_yaxes(range=[depthaxis,0], title="Depth in DBars")
     
     # this puts location information at bottom right of the temperature graph
     # better than making it a title since positioning is more versatile
@@ -251,9 +260,10 @@ def update_tgraph(hov_data):
 # make the salinity graph based on "hovering" over location on the map
 @app.callback(
     Output(component_id='salinity', component_property='figure'),
-    Input(component_id='map', component_property='hoverData')
+    Input(component_id='map', component_property='hoverData'),
+    Input('depthaxis', 'value')
 )
-def update_sgraph(hov_data):
+def update_sgraph(hov_data, depthaxis):
     if hov_data is None:
         readfile = "data/33RR20180918_00001_00002_ct1.csv"
         # lat/long not needed since annotation is on the temperature plot. 
@@ -265,16 +275,17 @@ def update_sgraph(hov_data):
     figS = px.line(sitedf, x="CTDSAL", y="CTDPRS", title='Salinity')
     figS.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
     figS.update_xaxes(range=[31,37], title="PSS-78")
-    figS.update_yaxes(range=[2600,0], title="Depth in DBars")
+    figS.update_yaxes(range=[depthaxis,0], title="Depth in DBars")
     
     return figS
 
 # make the salinity graph based on "hovering" over location on the map
 @app.callback(
     Output(component_id='oxygen', component_property='figure'),
-    Input(component_id='map', component_property='hoverData')
+    Input(component_id='map', component_property='hoverData'),
+    Input('depthaxis', 'value')
 )
-def update_sgraph(hov_data):
+def update_sgraph(hov_data, depthaxis):
     if hov_data is None:
         readfile = "data/33RR20180918_00001_00002_ct1.csv"
         # lat/long not needed since annotation is on the temperature plot. 
@@ -286,7 +297,7 @@ def update_sgraph(hov_data):
     figO = px.line(sitedf, x="CTDOXY", y="CTDPRS", title='Oxygen')
     figO.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
     figO.update_xaxes(range=[0,320], title="UMOL/KG")
-    figO.update_yaxes(range=[2600,0], title="Depth in DBars")
+    figO.update_yaxes(range=[depthaxis,0], title="Depth in DBars")
     
     return figO
 
