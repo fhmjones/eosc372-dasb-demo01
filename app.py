@@ -32,8 +32,8 @@ ocgysites = pd.read_csv("latlong-list-1each.csv")
 
 # read the first data file to make the first station's temperature and salinity plots
 def read_onedataset(file):
-    df = pd.read_csv(file, skiprows = 39, names=['CTDPRS' , 'CTDPRS_FLAG_W' , 'CTDTMP' , 'CTDTMP_FLAG_W' , 'CTDSAL' , 'CTDSAL_FLAG_W' , 'CTDOXY' , 'CTDOXY_FLAG_W' , 'CTDXMISS' , 'CTDXMISS_FLAG_W' , 'CTDFLUOR' , 'CTDFLUOR_FLAG_W' , 'CTDRINKO' , 'CTDRINKO_FLAG_W'])
-    return df
+    df = pd.read_csv(file, skiprows = 39, index_col=False, names=['CTDPRS' , 'CTDPRS_FLAG_W' , 'CTDTMP' , 'CTDTMP_FLAG_W' , 'CTDSAL' , 'CTDSAL_FLAG_W' , 'CTDOXY' , 'CTDOXY_FLAG_W' , 'CTDXMISS' , 'CTDXMISS_FLAG_W' , 'CTDFLUOR' , 'CTDFLUOR_FLAG_W' , 'CTDRINKO' , 'CTDRINKO_FLAG_W'])
+    return df.drop([len(df)-1])
 
 app.layout = html.Div([
     dcc.Markdown('''
@@ -218,7 +218,7 @@ def update_map(mapheight, color_checkbox, background):
  
     return fig
 
-# make the temperature graph based on "hovering" over location on the map
+# Temperature graph based on "hovering" over location on the map
 @app.callback(
     Output(component_id='temperature', component_property='figure'),
     Input(component_id='map', component_property='hoverData'),
@@ -236,10 +236,12 @@ def update_tgraph(hov_data, depthaxis):
         longit = hov_data['points'][0]['lon']
     
     sitedf = read_onedataset(readfile)
-    annot_lat = f'Locn: {latit:4.4f}N'
-    annot_long = f'{longit:4.4f}E'
+    xvals = sitedf["CTDTMP"]
+    yvals = sitedf["CTDPRS"].astype('float') # SEEMS NECESSARY OR GRAPHS HAVE "CATEGORIES" FOR Y-AXIS
+    annot_lat = f'Lat: {latit:4.4f}N'
+    annot_long = f'Lon: {longit:4.4f}E'
         
-    figT = px.line(sitedf, x="CTDTMP", y="CTDPRS", title='Temperature')
+    figT = px.line(x=xvals, y=yvals, title='Temperature')
     figT.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
     figT.update_xaxes(range=[0,30], title="deg. C.")
     # figT.update_xaxes(range=[0,30], title="deg. C.", side="top")
@@ -253,11 +255,11 @@ def update_tgraph(hov_data, depthaxis):
                   x=.14, y=.1, showarrow=False)
     figT.add_annotation(text=annot_long,
                   xref="paper", yref="paper",
-                  x=.32, y=.05, showarrow=False)
+                  x=.14, y=.05, showarrow=False)
 
     return figT
 
-# make the salinity graph based on "hovering" over location on the map
+# Salinity graph based on "hovering" over location on the map
 @app.callback(
     Output(component_id='salinity', component_property='figure'),
     Input(component_id='map', component_property='hoverData'),
@@ -271,15 +273,17 @@ def update_sgraph(hov_data, depthaxis):
         readfile = hov_data['points'][0]['customdata'][0]
     
     sitedf = read_onedataset(readfile)
+    xvals = sitedf["CTDSAL"]
+    yvals = sitedf["CTDPRS"].astype('float') # SEEMS NECESSARY OR GRAPHS HAVE "CATEGORIES" FOR Y-AXIS
 
-    figS = px.line(sitedf, x="CTDSAL", y="CTDPRS", title='Salinity')
+    figS = px.line(x=xvals, y=yvals, title='Salinity')
     figS.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
     figS.update_xaxes(range=[31,37], title="PSS-78")
     figS.update_yaxes(range=[depthaxis,0], title="Depth in DBars")
     
     return figS
 
-# make the salinity graph based on "hovering" over location on the map
+# Oxygen graph based on "hovering" over location on the map
 @app.callback(
     Output(component_id='oxygen', component_property='figure'),
     Input(component_id='map', component_property='hoverData'),
@@ -293,8 +297,10 @@ def update_sgraph(hov_data, depthaxis):
         readfile = hov_data['points'][0]['customdata'][0]
     
     sitedf = read_onedataset(readfile)
+    xvals = sitedf["CTDOXY"]
+    yvals = sitedf["CTDPRS"].astype('float') # SEEMS NECESSARY OR GRAPHS HAVE "CATEGORIES" FOR Y-AXIS
 
-    figO = px.line(sitedf, x="CTDOXY", y="CTDPRS", title='Oxygen')
+    figO = px.line(x=xvals, y=yvals, title='Oxygen')
     figO.update_layout(margin={'l': 0, 'b': 0, 'r': 20, 't': 40})
     figO.update_xaxes(range=[0,320], title="UMOL/KG")
     figO.update_yaxes(range=[depthaxis,0], title="Depth in DBars")
