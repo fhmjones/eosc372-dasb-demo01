@@ -39,19 +39,24 @@ app.layout = html.Div([
     dcc.Markdown('''
         ### CTD data from Cruise 33RR20180918
 
-        #### Purpose & Instructions
+        Data for this demonstration app were obtained from the [GEOTRACES cruise GP15](https://geotraces-gp15.com/about-geotraces-gp15/).
 
-        * A learning goal for this kind of application would relate to examining how 
-        temperature, salinity & oxygen depth profiles vary as a function of latitude in the Pacific Ocean. 
-        Data were obtained from the [GEOTRACES cruise GP15](https://geotraces-gp15.com/about-geotraces-gp15/).
-        * A secondare goal is to establish proof of concept. This dashboard code should be relatively easy (hopefully?) 
-        to adapt for other data sets, other locations, other learning goals.
-        * **Instructions**: An interactive map is shown with measurement stations along longitude -152E, from Alaska to south of equator. 
-        Mouse-over a station (dots) will plot the corresponding temperature, salinity & oxygen profiles. Mouse wheel zooms within the map. 
-        Map background and station dot color can be adjusted with checkboxes. The slider changes vertical size of the map. 
-        These are included for demonstration purposes. Other types of adjustments could be included, depending on the needs of the users and learning goals. 
-        The app could be expanded to include other data provided with this data-set 
-        (there are three others that would need calibration information as their values are in "volts"). 
+        #### Purpose
+        
+        1. A preliminary demonstration to learn how to write an app that facilitates efficient exploration of geographically located datasets.
+        2. To inspire creative ways of exploring, analyzing or interpreting data for lessons, labs or assignments. 
+        
+        #### Instructions 
+        An interactive map is shown with measurement stations along longitude -152E, from Alaska to the equator. 
+        
+        - Mouse-over a station (dots) will plot the corresponding temperature, salinity & oxygen profiles.  
+        - Mouse wheel zooms within the map.  
+        - Map background and station dot color can be adjusted with checkboxes.  
+        - The map's slider changes vertical size of the map.  
+        - Depth scale can be adjusted for all three plots together using the slider above the three depth profiles.  
+        - Each depth profile can be saved as a figure which students could submit with an assignment.  
+  
+        Other types of interactivity can be easiy included, depending on the needs of the users and learning goals. 
 
         ----------
         '''),    
@@ -61,7 +66,7 @@ app.layout = html.Div([
 # Content can be delivered using html, but markdown is simpler. 
     html.Div([
         dcc.Markdown('''
-        **Select signal components**
+        **Select point colour, map type & size**
         '''),
         # switch between plain or satellite view for the map
         dcc.Checklist(
@@ -165,7 +170,7 @@ app.layout = html.Div([
     dcc.Markdown('''
         ----
         
-        ### Questions to consider
+        ### Questions for students
 
         To be added when an actual oceanography dashboard is created.
 
@@ -192,7 +197,7 @@ def update_map(mapheight, color_checkbox, background):
     else: dotcolor = 'fuchsia'
     
     fig = px.scatter_mapbox(ocgysites, lat="lat", lon="long", hover_name="locn", hover_data=["drop"],
-                            color_discrete_sequence=[dotcolor], zoom=1, height=mapheight,
+                            color_discrete_sequence=[dotcolor], zoom=1.2, height=mapheight,
                             custom_data=['filename'])
             
     # use this for a plain, easy-to-read street map
@@ -214,7 +219,7 @@ def update_map(mapheight, color_checkbox, background):
             }
         ])
     
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0}) # use "t":30 to put map below controls if they were there.
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0}, title='GP15 sounding locns') # use "t":30 to put map below controls if they were there.
  
     return fig
 
